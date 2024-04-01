@@ -1,10 +1,10 @@
-version: "3.1"
+version: '3.1'
 services:
   nginx:
     image: nginx:alpine
     restart: always
     ports:
-      - "80:80"
+      - '80:80'
     volumes:
       - ./frontend/dist:/srv/www/static
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -12,7 +12,7 @@ services:
       - php
       - nodejs
       - mysql
-      - pg
+      - postgresql
   nodejs:
     image: node:alpine
     environment:
@@ -23,7 +23,7 @@ services:
       - ./node-app:/home/app
     depends_on:
       - php
-    command: ["npm", "run", "start:dev"]
+    command: ['npm', 'run', 'start:dev']
 
   php:
     image: webdevops/php-apache-dev:8.2
@@ -39,18 +39,33 @@ services:
       MYSQL_USER: mysqluser
       MYSQL_PASSWORD: password
     ports:
-      - "3309:3306"
+      - '3309:3306'
     volumes:
       - ./db-store/mysql:/var/lib/mysql
     restart: always
-  pg:
+  postgresql:
     image: postgres:latest
     environment:
       POSTGRES_USER: pguser
       POSTGRES_PASSWORD: password
       POSTGRES_DB: nestjs
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - ./db-store/pg:/var/lib/postgresql/data
     restart: always
+  keycloak:
+    image: quay.io/keycloak/keycloak:20.0
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgresql/nestjs
+      KC_DB_USERNAME: pguser
+      KC_DB_PASSWORD: password
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgresql
+    command:
+      - start-dev
